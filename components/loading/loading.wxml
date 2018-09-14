@@ -1,0 +1,4 @@
+<view class="loading" style="{{_style}}">
+  <image class="loading_img" src="./loading.png" mode="aspectFit"></image>
+  <text class="loading_label">{{label}}</text>
+</view>

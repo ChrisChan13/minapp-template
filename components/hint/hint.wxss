@@ -1,0 +1,13 @@
+.hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100rpx;
+  font-size: 24rpx;
+  color: #CCCCCC;
+  line-height: 34rpx;
+  text-align: center;
+  box-sizing: border-box;
+  padding: 0 30rpx;
+}
