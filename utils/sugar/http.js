@@ -101,7 +101,7 @@ export const upload = async (local) => {
         console.info(`Uploaded file to: ${qiniu.domain}`);
         console.log(res);
 
-        const data = JSON.parse(rse.data);
+        const data = JSON.parse(res.data);
         deferred.resolve(`${qiniu.domain}${data.key}`);
       },
       fail(err) {
