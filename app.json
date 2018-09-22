@@ -1,11 +1,11 @@
 {
-  "pages":[
+  "pages": [
     "pages/index/index"
   ],
-  "window":{
+  "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#fff",
     "navigationBarTitleText": "{{name}}",
-    "navigationBarTextStyle":"black"
+    "navigationBarTextStyle": "black"
   }
 }

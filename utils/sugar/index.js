@@ -5,7 +5,6 @@ import * as $cache from './cache';
 import * as $router from './router';
 
 export default (target) => {
-  console.time();
   Object.defineProperties(target, {
     $: {
       value: { ...$ },
@@ -23,5 +22,4 @@ export default (target) => {
       value: { ...$cache },
     },
   });
-  console.timeEnd();
 };
