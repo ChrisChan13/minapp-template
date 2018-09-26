@@ -1,6 +1,6 @@
-import Q from '../../libs/q.min';
+import Q from '../libs/q.min';
 import * as cache from './cache';
-import regeneratorRuntime from '../../libs/regenerator.runtime.min';
+import regeneratorRuntime from '../libs/regenerator.runtime.min';
 
 // qiniu configuration
 const qiniu = {
@@ -32,13 +32,13 @@ const request = (method = 'GET') => async (url, data = {}, header = {}) => {
       console.log(res.data);
 
       if (parseInt(res.statusCode, 10) === 200) deferred.resolve(res.data);
-      else deferred.reject(res.data);
+      else deferred.reject(new Error('网络错误'));
     },
     fail(err) {
       console.info(`Responsed error from: ${url}`);
       console.error(err);
 
-      deferred.reject(err);
+      deferred.reject(new Error('网络错误'));
     },
   });
   return deferred.promise;
@@ -67,7 +67,7 @@ export const download = (url) => {
       console.info(`Downloading error from: ${url}`);
       console.error(err);
 
-      deferred.reject(err);
+      deferred.reject(new Error('下载失败'));
     },
   });
   return deferred.promise;
@@ -108,32 +108,9 @@ export const upload = async (local) => {
         console.info(`Uploading error to: ${qiniu.domain}`);
         console.error(err);
 
-        deferred.reject(err);
+        deferred.reject(new Error('上传失败'));
       },
     });
   }
-  return deferred.promise;
-};
-
-// requesting wechat payment
-export const pay = (params = {}) => {
-  const deferred = Q.defer();
-  console.info('Requesting wechat payment..');
-
-  wx.requestPayment({
-    ...params,
-    sucess(res) {
-      console.info('Paid success!');
-      console.log(res);
-
-      deferred.resolve();
-    },
-    fail(err) {
-      console.info('Paid error!');
-      console.error(err);
-
-      deferred.reject(err);
-    },
-  });
   return deferred.promise;
 };

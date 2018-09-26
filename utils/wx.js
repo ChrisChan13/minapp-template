@@ -1,4 +1,4 @@
-import Q from '../../libs/q.min';
+import Q from '../libs/q.min';
 
 // destruct params
 const destructPayload = (defaults = {}, payload = {}, next) => {
@@ -44,23 +44,12 @@ export const getSystemInfo = () => {
 };
 
 export const showToast = payload => destructPayload({
-  title: '',
-  duration: 1500,
-  mask: false,
   icon: 'none',
 }, payload, (params) => {
   wx.showToast({ ...params });
 });
 
-export const showModal = payload => destructPayload({
-  title: '',
-  content: '',
-  showCancel: true,
-  cancelText: '取消',
-  cancelColor: '#000000',
-  confirmText: '确定',
-  confirmColor: '#3CC51F',
-}, payload, (params) => {
+export const showModal = payload => destructPayload({}, payload, (params) => {
   const deferred = Q.defer();
   wx.showModal({
     ...params,
@@ -112,11 +101,7 @@ export const getLocation = () => {
   return deferred.promise;
 };
 
-export const chooseImage = payload => destructPayload({
-  count: 9,
-  sizeType: ['original', 'compressed'],
-  sourceType: ['album', 'camera'],
-}, payload, (params) => {
+export const chooseImage = payload => destructPayload({}, payload, (params) => {
   const deferred = Q.defer();
   wx.chooseImage({
     ...params,
@@ -130,10 +115,7 @@ export const chooseImage = payload => destructPayload({
   return deferred.promise;
 });
 
-export const previewImage = payload => destructPayload({
-  urls: [],
-  current: '',
-}, payload, (params) => {
+export const previewImage = payload => destructPayload({}, payload, (params) => {
   wx.previewImage({
     ...params,
   });
@@ -156,9 +138,7 @@ export const chooseLocation = () => {
   return deferred.promise;
 };
 
-export const authorize = payload => destructPayload({
-  scope: '',
-}, payload, (params) => {
+export const authorize = payload => destructPayload({}, payload, (params) => {
   const deferred = Q.defer();
   wx.authorize({
     ...params,
@@ -172,9 +152,7 @@ export const authorize = payload => destructPayload({
   return deferred.promise;
 });
 
-export const getImageInfo = payload => destructPayload({
-  src: '',
-}, payload, (params) => {
+export const getImageInfo = payload => destructPayload({}, payload, (params) => {
   const deferred = Q.defer();
   wx.getImageInfo({
     ...params,
@@ -188,9 +166,7 @@ export const getImageInfo = payload => destructPayload({
   return deferred.promise;
 });
 
-export const saveImageToPhotosAlbum = payload => destructPayload({
-  filePath: '',
-}, payload, (params) => {
+export const saveImageToPhotosAlbum = payload => destructPayload({}, payload, (params) => {
   const deferred = Q.defer();
   wx.saveImageToPhotosAlbum({
     ...params,
@@ -204,24 +180,15 @@ export const saveImageToPhotosAlbum = payload => destructPayload({
   return deferred.promise;
 });
 
-export const openLocation = payload => destructPayload({
-  latitude: 0,
-  longitude: 0,
-  scale: 28,
-}, payload, (params) => {
+export const openLocation = payload => destructPayload({}, payload, (params) => {
   wx.openLocation({ ...params });
 });
 
-export const makePhoneCall = payload => destructPayload({
-  phoneNumber: '',
-}, payload, (params) => {
+export const makePhoneCall = payload => destructPayload({}, payload, (params) => {
   wx.makePhoneCall({ ...params });
 });
 
-export const showLoading = payload => destructPayload({
-  title: '',
-  mask: false,
-}, payload, (params) => {
+export const showLoading = payload => destructPayload({}, payload, (params) => {
   wx.showLoading({ ...params });
 });
 
@@ -229,10 +196,7 @@ export const hideLoading = () => {
   wx.hideLoading();
 };
 
-export const showActionSheet = payload => destructPayload({
-  itemList: [],
-  itemColor: '#000000',
-}, payload, (params) => {
+export const showActionSheet = payload => destructPayload({}, payload, (params) => {
   const deferred = Q.defer();
   wx.showActionSheet({
     ...params,
@@ -246,34 +210,23 @@ export const showActionSheet = payload => destructPayload({
   return deferred.promise;
 });
 
-export const setTabBarBadge = payload => destructPayload({
-  index: 0,
-  text: '',
-}, payload, (params) => {
+export const setTabBarBadge = payload => destructPayload({}, payload, (params) => {
   wx.setTabBarBadge({ ...params });
 });
 
-export const removeTabBarBadge = payload => destructPayload({
-  index: 0,
-}, payload, (params) => {
+export const removeTabBarBadge = payload => destructPayload({}, payload, (params) => {
   wx.removeTabBarBadge({ ...params });
 });
 
-export const showTabBarRedDot = payload => destructPayload({
-  index: 0,
-}, payload, (params) => {
+export const showTabBarRedDot = payload => destructPayload({}, payload, (params) => {
   wx.showTabBarRedDot({ ...params });
 });
 
-export const hideTabBarRedDot = payload => destructPayload({
-  index: 0,
-}, payload, (params) => {
+export const hideTabBarRedDot = payload => destructPayload({}, payload, (params) => {
   wx.hideTabBarRedDot({ ...params });
 });
 
-export const setNavigationBarTitle = payload => destructPayload({
-  title: '',
-}, payload, (params) => {
+export const setNavigationBarTitle = payload => destructPayload({}, payload, (params) => {
   wx.setNavigationBarTitle({ ...params });
 });
 
@@ -285,14 +238,7 @@ export const hideNavigationBarLoading = () => {
   wx.hideNavigationBarLoading();
 };
 
-export const setNavigationBarColor = payload => destructPayload({
-  frontColor: '#000000',
-  backgroundColor: '#FFFFFF',
-  animation: {
-    duration: 0,
-    timingFunc: 'linear',
-  },
-}, payload, (params) => {
+export const setNavigationBarColor = payload => destructPayload({}, payload, (params) => {
   wx.setNavigationBarColor({ ...params });
 });
 
@@ -308,3 +254,17 @@ export const getUserInfo = () => {
   });
   return deferred.promise;
 };
+
+export const requestPayment = payload => destructPayload({}, payload, (params) => {
+  const deferred = Q.defer();
+  wx.requestPayment({
+    ...params,
+    success() {
+      deferred.resolve();
+    },
+    fail() {
+      deferred.reject(new Error('支付失败'));
+    },
+  });
+  return deferred.promise;
+});

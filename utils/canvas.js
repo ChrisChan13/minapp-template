@@ -109,7 +109,6 @@ class Canvas {
       y: 0,
       width: this.width,
       height: this.height,
-      data: new Uint8ClampedArray([]),
       canvasId: this.id,
     }, payload, putImageData);
   }

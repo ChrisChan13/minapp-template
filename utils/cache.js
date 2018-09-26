@@ -1,4 +1,4 @@
-import Q from '../../libs/q.min';
+import Q from '../libs/q.min';
 
 // set storage
 export const set = (key, data) => {

@@ -1,8 +1,8 @@
-import sugaring from './utils/sugar/index';
+import install from './utils/install';
 
 App({
   globalData: {},
   onLaunch(options) {
-    sugaring(this);
+    install(this);
   },
 });
