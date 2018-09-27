@@ -1,10 +1,10 @@
-<cover-view class="modal" catchtouchmove="_cancelMove" wx:if="{{native}}">
+<cover-view class="modal" style="{{_flex}}" catchtouchmove="_cancelMove" wx:if="{{native}}">
   <cover-view class="modal_bg" catchtouchstart="_cancelModal"></cover-view>
   <cover-view class="modal_main">
     <slot></slot>
   </cover-view>
 </cover-view>
-<view class="modal" catchtouchmove="_cancelMove" wx:else>
+<view class="modal" style="{{_flex}}" catchtouchmove="_cancelMove" wx:else>
   <view class="modal_bg" catchtouchstart="_cancelModal"></view>
   <view class="modal_main">
     <slot></slot>

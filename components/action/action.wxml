@@ -1,0 +1,71 @@
+<modal
+  wx:if="{{_show}}"
+  bind:cancel="_cancel"
+  mask="{{mask}}"
+  native="{{native}}"
+  flex="center end">
+    <cover-view
+      wx:if="{{native}}"
+      animation="{{_animation}}"
+      class="action">
+        <cover-view
+          class="list">
+            <cover-view
+              wx:if="{{title}}"
+              class="title">{{title}}</cover-view>
+            <cover-view
+              wx:if="{{content}}"
+              class="content">{{content}}</cover-view>
+            <block
+              wx:for="{{itemList}}"
+              wx:key="{{index}}">
+                <cover-view
+                  class="line_through"></cover-view>
+                <cover-view
+                  class="item"
+                  hover-class="item_hover"
+                  catchtap="_select"
+                  data-index="{{index}}"
+                  style="color: {{itemColor}};">{{item}}</cover-view>
+            </block>
+        </cover-view>
+        <cover-view
+          wx:if="{{showCancel}}"
+          class="cancel_wrap">
+            <cover-view
+              catchtap="_cancel"
+              class="cancel"
+              hover-class="item_hover"
+              style="color: {{cancelColor}};">{{cancelText}}</cover-view>
+        </cover-view>
+    </cover-view>
+    <view
+      wx:else
+      animation="{{_animation}}"
+      class="action">
+        <view
+          class="list">
+            <view
+              wx:if="{{title}}"
+              class="title">{{title}}</view>
+            <view
+              wx:if="{{content}}"
+              class="content">{{content}}</view>
+            <view
+              class="item"
+              catchtap="_select"
+              data-index="{{index}}"
+              style="color: {{itemColor}};"
+              wx:for="{{itemList}}"
+              wx:key="{{index}}">{{item}}</view>
+        </view>
+        <view
+          wx:if="{{showCancel}}"
+          class="cancel_wrap">
+            <view
+              catchtap="_cancel"
+              class="cancel"
+              style="color: {{cancelColor}};">{{cancelText}}</view>
+        </view>
+    </view>
+</modal>
