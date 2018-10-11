@@ -75,7 +75,7 @@ Component({
       this.triggerEvent('cancel', {});
     },
     _select(e) {
-      this.triggerEvent('select', { index: e.currentTarget.dataset.index });
+      this.triggerEvent('select', { index: Number(e.currentTarget.dataset.index) });
     },
   },
 });

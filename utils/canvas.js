@@ -52,6 +52,29 @@ const getImageData = (params) => {
   return deferred.promise;
 };
 
+const getThemeColor = async (params) => {
+  const deferred = Q.defer();
+  const block = 5;
+  const rgb = { r: 0, g: 0, b: 0 };
+  let count = 0;
+  const { data } = await getImageData(params);
+  const { length } = data;
+  let i = block * 4 - 4;
+  while (i < length) {
+    ++count;
+    rgb.r += data[i];
+    rgb.g += data[i + 1];
+    rgb.b += data[i + 2];
+    i += block * 4;
+  }
+  /* eslint-disable no-bitwise */
+  rgb.r = ~~(rgb.r / count);
+  rgb.g = ~~(rgb.g / count);
+  rgb.b = ~~(rgb.b / count);
+  deferred.resolve(rgb);
+  return deferred.promise;
+};
+
 const putImageData = (params) => {
   const deferred = Q.defer();
   wx.canvasPutImageData({
@@ -111,6 +134,16 @@ class Canvas {
       height: this.height,
       canvasId: this.id,
     }, payload, putImageData);
+  }
+
+  getThemeColor(payload) {
+    return destructPayload({
+      x: 0,
+      y: 0,
+      width: this.width,
+      height: this.height,
+      canvasId: this.id,
+    }, payload, getThemeColor);
   }
 
   toTempFilePath(payload) {
