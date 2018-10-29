@@ -32,13 +32,13 @@ const request = (method = 'GET') => async (url, data = {}, header = {}) => {
       console.log(res.data);
 
       if (parseInt(res.statusCode, 10) === 200) deferred.resolve(res.data);
-      else deferred.reject(new Error('网络错误'));
+      else deferred.reject({ msg: '网络错误' });
     },
     fail(err) {
       console.info(`Responsed error from: ${url}`);
       console.error(err);
 
-      deferred.reject(new Error('网络错误'));
+      deferred.reject({ msg: '网络错误' });
     },
   });
   return deferred.promise;
@@ -67,7 +67,7 @@ export const download = (url) => {
       console.info(`Downloading error from: ${url}`);
       console.error(err);
 
-      deferred.reject(new Error('下载失败'));
+      deferred.reject({ msg: '文件下载失败' });
     },
   });
   return deferred.promise;
@@ -108,7 +108,7 @@ export const upload = async (local) => {
         console.info(`Uploading error to: ${qiniu.domain}`);
         console.error(err);
 
-        deferred.reject(new Error('上传失败'));
+        deferred.reject({ msg: '文件上传失败' });
       },
     });
   }

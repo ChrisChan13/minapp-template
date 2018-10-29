@@ -19,11 +19,11 @@ export const login = () => {
       if (res.code) {
         deferred.resolve(res.code);
       } else {
-        deferred.reject(new Error('微信登录失败'));
+        deferred.reject({ msg: '微信登录失败' });
       }
     },
     fail(err) {
-      deferred.reject(new Error('微信登录失败'));
+      deferred.reject({ msg: '微信登录失败' });
     },
   });
   return deferred.promise;
@@ -37,7 +37,7 @@ export const getSystemInfo = () => {
       deferred.resolve(sysInfo);
     },
     fail() {
-      deferred.reject(new Error('获取系统信息失败'));
+      deferred.reject({ msg: '获取系统信息失败' });
     },
   });
   return deferred.promise;
@@ -78,7 +78,7 @@ export const getScope = () => {
       deferred.resolve(scope);
     },
     fail() {
-      deferred.reject(new Error('获取授权信息失败'));
+      deferred.reject({ msg: '获取授权信息失败' });
     },
   });
   return deferred.promise;
@@ -95,7 +95,7 @@ export const getLocation = () => {
       });
     },
     fail() {
-      deferred.reject(new Error('获取位置信息失败'));
+      deferred.reject({ msg: '获取位置信息失败' });
     },
   });
   return deferred.promise;
@@ -126,7 +126,7 @@ export const chooseLocation = ({ strict = true }) => {
   wx.chooseLocation({
     success(res) {
       if (strict && (res.name === '' || res.address === '')) {
-        deferred.reject(new Error('请选择正确地址'));
+        deferred.reject({ msg: '请选择正确地址' });
       } else {
         deferred.resolve(res);
       }
@@ -146,7 +146,7 @@ export const authorize = payload => destructPayload({}, payload, (params) => {
       deferred.resolve();
     },
     fail() {
-      deferred.reject(new Error('获取授权信息失败'));
+      deferred.reject({ msg: '获取授权信息失败' });
     },
   });
   return deferred.promise;
@@ -160,7 +160,7 @@ export const getImageInfo = payload => destructPayload({}, payload, (params) => 
       deferred.resolve(res);
     },
     fail() {
-      deferred.reject(new Error('获取图片信息失败'));
+      deferred.reject({ msg: '获取图片信息失败' });
     },
   });
   return deferred.promise;
@@ -174,7 +174,7 @@ export const saveImageToPhotosAlbum = payload => destructPayload({}, payload, (p
       deferred.resolve();
     },
     fail() {
-      deferred.reject(new Error('图片保存失败'));
+      deferred.reject({ msg: '图片保存失败' });
     },
   });
   return deferred.promise;
@@ -249,7 +249,7 @@ export const getUserInfo = () => {
       deferred.resolve(res);
     },
     fail() {
-      deferred.reject(new Error('获取用户信息失败'));
+      deferred.reject({ msg: '获取用户信息失败' });
     },
   });
   return deferred.promise;
@@ -263,7 +263,7 @@ export const requestPayment = payload => destructPayload({}, payload, (params) =
       deferred.resolve();
     },
     fail() {
-      deferred.reject(new Error('支付失败'));
+      deferred.reject({ msg: '支付失败' });
     },
   });
   return deferred.promise;

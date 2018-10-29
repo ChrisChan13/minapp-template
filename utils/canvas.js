@@ -23,7 +23,7 @@ const getInfo = (canvasId, instance) => {
       if (res[0].length) {
         deferred.resolve(res[0][0]);
       } else {
-        deferred.reject(new Error('找不到对应画布'));
+        deferred.reject({ msg: '找不到对应画布' });
       }
     });
   return deferred.promise;
@@ -46,7 +46,7 @@ const getImageData = (params) => {
       deferred.resolve(res);
     },
     fail(err) {
-      deferred.reject(new Error('所选画布区域为空'));
+      deferred.reject({ msg: '所选画布区域为空' });
     },
   });
   return deferred.promise;
@@ -83,7 +83,7 @@ const putImageData = (params) => {
       deferred.resolve();
     },
     fail(err) {
-      deferred.reject(new Error('图像数据错误'));
+      deferred.reject({ msg: '图像数据错误' });
     },
   });
   return deferred.promise;
@@ -97,7 +97,7 @@ const toTempFilePath = (params) => {
       deferred.resolve(res.tempFilePath);
     },
     fail(err) {
-      deferred.reject(new Error('生成图片失败'));
+      deferred.reject({ msg: '生成图片失败' });
     },
   });
   return deferred.promise;

@@ -4,8 +4,8 @@ const formatNumber = (n) => {
   return number[1] ? number : `0${number}`;
 };
 
-// format date: xxxx-xx-xx
-export const formatDate = (date, join = '-') => {
+// format date: xxxx/xx/xx
+export const formatDate = (date, join = '/') => {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -20,48 +20,48 @@ export const formatTime = (date, join = ':') => {
   return [hour, minute, second].map(formatNumber).join(join);
 };
 
-// format date+time: xxxx-xx-xx xx:xx:xx
+// format date+time: xxxx/xx/xx xx:xx:xx
 export const formatTimeShow = date => `${formatDate(date)} ${formatTime(date)}`;
 
 const weeks = ['日', '一', '二', '三', '四', '五', '六'];
 // format week: 星期x
-export const formatWeek = day => `星期${weeks[day]}`;
+export const formatWeek = date => `星期${weeks[date.getDay()]}`;
 
 // pretty time
-export const prettyTime = (date, showExtras = true) => {
-  const now = new Date();
-  const nowYear = now.getFullYear();
-  const nowMonth = now.getMonth() + 1;
-  const nowDay = now.getDate();
+export const prettyTime = (time, detailed = true) => {
+  const nowTime = new Date();
+  const nowYear = nowTime.getFullYear();
+  const nowMonth = nowTime.getMonth() + 1;
+  const nowDay = nowTime.getDate();
+  const nowStamp = new Date(`${nowYear}/${nowMonth}/${nowDay} 00:00:00`).getTime();
 
-  const pastYear = date.getFullYear();
-  const pastMonth = date.getMonth() + 1;
-  const pastDay = date.getDate();
+  time = new Date(time);
+  const year = time.getFullYear();
+  const month = time.getMonth() + 1;
+  const day = time.getDate();
+  const week = formatWeek(time);
+  const hour = time.getHours();
+  const minute = time.getMinutes();
+  const stamp = new Date(`${year}/${month}/${day} 00:00:00`).getTime();
 
-  if (nowYear === pastYear
-    && nowMonth === pastMonth
-    && nowDay === pastDay) {
-    let timeString = date.toLocaleTimeString();
-    timeString = timeString.slice(0, timeString.lastIndexOf(':'));
-    return `${timeString.slice(0, 2)} ${timeString.slice(2)}`;
-  } if (nowYear === pastYear
-    && nowMonth === pastMonth
-    && nowDay - pastDay === 1) {
-    let timeString = date.toLocaleTimeString();
-    timeString = timeString.slice(0, timeString.lastIndexOf(':'));
-    const extras = showExtras ? ` ${timeString.slice(0, 2)} ${timeString.slice(2)}` : '';
-    return `昨天${extras}`;
-  } if (nowYear === pastYear
-    && nowMonth === pastMonth
-    && nowDay - pastDay === 2) {
-    let timeString = date.toLocaleTimeString();
-    timeString = timeString.slice(0, timeString.lastIndexOf(':'));
-    const extras = showExtras ? ` ${timeString.slice(0, 2)} ${timeString.slice(2)}` : '';
-    return `${formatWeek(date.getDay())}${extras}`;
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  let result = '';
+  const detail = `${formatNumber(hour)}:${formatNumber(minute)}`;
+
+  if (nowStamp === stamp) {
+    // xx:xx
+    result = detail;
+  } else if (nowStamp - stamp === oneDay) {
+    // 昨天 xx:xx
+    result = `昨天${detailed ? ` ${detail}` : ''}`;
+  } else if (nowStamp - stamp === 2 * oneDay) {
+    // 星期x xx:xx
+    result = `${week}${detailed ? ` ${detail}` : ''}`;
+  } else {
+    // xxxx/xx/xx xx:xx
+    result = `${year}/${formatNumber(month)}/${formatNumber(day)}${detailed ? ` ${detail}` : ''}`;
   }
-  const dateString = formatDate(date, '/');
-  let timeString = date.toLocaleTimeString();
-  timeString = timeString.slice(0, timeString.lastIndexOf(':'));
-  const extras = showExtras ? ` ${timeString.slice(0, 2)} ${timeString.slice(2)}` : '';
-  return `${dateString}${extras}`;
+
+  return result;
 };
