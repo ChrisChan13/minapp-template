@@ -7,6 +7,8 @@ module.exports = {
     "getApp": true,
     "Component": true,
     "getCurrentPages": true,
+    "cancelAnimationFrame": true,
+    "requestAnimationFrame": true,
   },
   "rules": {
     "no-console": 0,
