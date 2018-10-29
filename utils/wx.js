@@ -121,11 +121,11 @@ export const previewImage = payload => destructPayload({}, payload, (params) => 
   });
 });
 
-export const chooseLocation = () => {
+export const chooseLocation = ({ strict = true }) => {
   const deferred = Q.defer();
   wx.chooseLocation({
     success(res) {
-      if (res.name === '' || res.address === '') {
+      if (strict && (res.name === '' || res.address === '')) {
         deferred.reject(new Error('请选择正确地址'));
       } else {
         deferred.resolve(res);
