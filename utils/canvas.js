@@ -148,13 +148,7 @@ class Canvas {
 
   toTempFilePath(payload) {
     return destructPayload({
-      x: 0,
-      y: 0,
-      width: this.width,
-      height: this.height,
-      destWidth: this.width,
-      destHeight: this.height,
-      fileType: 'png',
+      fileType: 'jpg',
       quality: 1,
       canvasId: this.id,
     }, payload, toTempFilePath);

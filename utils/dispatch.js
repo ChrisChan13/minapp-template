@@ -2,6 +2,7 @@ const isObject = (value) => {
   const type = typeof value;
   return value !== null && (type === 'object' || type === 'function');
 };
+
 export const debounce = (func, wait, options) => {
   let lastCallTime;
   let lastInvokeTime = 0;
@@ -19,7 +20,6 @@ export const debounce = (func, wait, options) => {
     throw new TypeError('Expected a function');
   }
 
-  /* eslint no-param-reassign: off */
   wait = +wait || 0;
   if (isObject(options)) {
     leading = !!options.leading;
@@ -39,8 +39,7 @@ export const debounce = (func, wait, options) => {
   const invokeFunc = (time) => {
     const args = lastArgs;
     const thisArg = lastThis;
-    lastArgs = undefined;
-    lastThis = undefined;
+    lastArgs = lastThis = undefined;
     lastInvokeTime = time;
     result = func.apply(thisArg, args);
     return result;
@@ -51,8 +50,7 @@ export const debounce = (func, wait, options) => {
     if (trailing && lastArgs) {
       return invokeFunc(time);
     }
-    lastArgs = undefined;
-    lastThis = undefined;
+    lastArgs = lastThis = undefined;
     return result;
   };
 
@@ -84,6 +82,7 @@ export const debounce = (func, wait, options) => {
   const leadingEdge = (time) => {
     lastInvokeTime = time;
     timerId = startTimer(timerExpired, wait);
+    return leading ? invokeFunc(time) : result;
   };
 
   const debounced = (...args) => {
@@ -121,10 +120,7 @@ export const debounce = (func, wait, options) => {
       cancelTimer(timerId);
     }
     lastInvokeTime = 0;
-    lastArgs = undefined;
-    lastCallTime = undefined;
-    lastThis = undefined;
-    timerId = undefined;
+    lastArgs = lastCallTime = lastThis = timerId = undefined;
   };
 
   const flush = () => (timerId === undefined ? result : trailingEdge(Date.now()));
