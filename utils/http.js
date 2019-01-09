@@ -7,7 +7,6 @@ const qiniu = {
   uptokenURL: '',
   uploadURL: '',
   domain: '',
-  prefix: '', // could be your appid
 };
 
 // http request
@@ -86,9 +85,9 @@ export const upload = async (local) => {
     console.info(`Uploading file to: ${qiniu.domain}`);
 
     const uptoken = await get(qiniu.uptokenURL);
-    const time = new Date().getTime();
-    const random = `${Math.random()}`;
-    const key = `${qiniu.prefix}.${time}.${random.slice(2, 15)}`;
+    const time = Date.now();
+    const random = `${Math.round(Math.random() * 9999999)}`;
+    const key = `${time}${random.padStart(7, '0')}`;
     wx.uploadFile({
       url: qiniu.uploadURL,
       filePath: local,

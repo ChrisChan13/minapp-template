@@ -1,4 +1,5 @@
 .action {
+  z-index: 13;
   transform: translateY(1300px);
 }
 

@@ -1,8 +1,5 @@
 // prefix number
-const formatNumber = (n) => {
-  const number = n.toString();
-  return number[1] ? number : `0${number}`;
-};
+const formatNumber = n => `${n}`.padStart(2, '0');
 
 // format date: xxxx/xx/xx
 export const formatDate = (date, join = '/') => {

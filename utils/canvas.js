@@ -89,9 +89,9 @@ const putImageData = (params) => {
   return deferred.promise;
 };
 
-const toTempFilePath = (params) => {
+const toTempFilePath = (params, instance) => {
   const deferred = Q.defer();
-  wx.canvasToTempFilePath({
+  const payload = [{
     ...params,
     success(res) {
       deferred.resolve(res.tempFilePath);
@@ -99,7 +99,9 @@ const toTempFilePath = (params) => {
     fail(err) {
       deferred.reject({ msg: '生成图片失败' });
     },
-  });
+  }];
+  if (typeof instance !== 'undefined') payload.push(instance);
+  wx.canvasToTempFilePath(...payload);
   return deferred.promise;
 };
 
