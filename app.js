@@ -1,10 +1,6 @@
-import install from './utils/install';
-
-require('./utils/sdk');
+import './utils/init';
 
 App({
   globalData: {},
-  onLaunch(options) {
-    install(this);
-  },
+  onLaunch(options) {},
 });

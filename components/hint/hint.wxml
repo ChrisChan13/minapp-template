@@ -1,3 +1,0 @@
-<view class="hint" style="{{_style}}">
-  <slot></slot>
-</view>

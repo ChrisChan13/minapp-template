@@ -1,270 +1,441 @@
-import Q from '../libs/q.min';
+export default () => {
+  const { Q, regeneratorRuntime, MinaError } = global;
+  const $wx = Object.assign({}, { ...wx });
 
-// destruct params
-const destructPayload = (defaults = {}, payload = {}, next) => {
-  const params = Object.assign(defaults, (() => {
-    const temp = Object.assign({}, payload);
-    delete temp.success;
-    delete temp.fail;
-    delete temp.complete;
-    return temp;
-  })());
-  return next(params);
-};
+  const isInvalidString = str => str === '' || str === null || str === undefined || Number.isNaN(str);
 
-export const login = () => {
-  const deferred = Q.defer();
-  wx.login({
-    success(res) {
-      if (res.code) {
-        deferred.resolve(res.code);
-      } else {
-        deferred.reject({ msg: '微信登录失败' });
-      }
-    },
-    fail(err) {
-      deferred.reject({ msg: '微信登录失败' });
-    },
-  });
-  return deferred.promise;
-};
+  const destructPayload = (defaults = {}, payload = {}, next) => {
+    const params = Object.assign(defaults, payload);
+    return next(params);
+  };
 
-export const getSystemInfo = () => {
-  const deferred = Q.defer();
-  wx.getSystemInfo({
-    success(res) {
-      const sysInfo = Object.assign({}, { scale: res.windowWidth / 750, ...res });
-      deferred.resolve(sysInfo);
-    },
-    fail() {
-      deferred.reject({ msg: '获取系统信息失败' });
-    },
-  });
-  return deferred.promise;
-};
-
-export const showToast = payload => destructPayload({
-  icon: 'none',
-}, payload, (params) => {
-  wx.showToast({ ...params });
-});
-
-export const showModal = payload => destructPayload({}, payload, (params) => {
-  const deferred = Q.defer();
-  wx.showModal({
-    ...params,
-    success(res) {
-      if (res.confirm) {
-        deferred.resolve();
-      } else {
-        deferred.reject();
-      }
-    },
-  });
-  return deferred.promise;
-});
-
-export const getScope = () => {
-  const deferred = Q.defer();
-  wx.getSetting({
-    success(res) {
-      const scope = {};
-      Object.entries(res.authSetting).map((setting) => {
-        Object.assign(scope, {
-          [`${setting[0].slice(6)}`]: setting[1],
-        });
-        return setting;
+  return {
+    login: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.login({
+        success(res) {
+          if (res.code) deferred.resolve(res.code);
+          else deferred.reject(new MinaError({ ...res, errHint: '微信登录失败' }));
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '微信登录失败' }));
+        },
+        ...params,
       });
-      deferred.resolve(scope);
-    },
-    fail() {
-      deferred.reject({ msg: '获取授权信息失败' });
-    },
-  });
-  return deferred.promise;
-};
-
-export const getLocation = () => {
-  const deferred = Q.defer();
-  wx.getLocation({
-    type: 'gcj02',
-    success(res) {
-      deferred.resolve({
-        latitude: res.latitude,
-        longitude: res.longitude,
+      return deferred.promise;
+    }),
+    getSystemInfo: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getSystemInfo({
+        success(res) {
+          const sysInfo = Object.assign({}, { ...res, scale: res.windowWidth / 750 });
+          deferred.resolve(sysInfo);
+        },
+        fail(err) {
+          deferred.reject(new MinaError(err));
+        },
+        ...params,
       });
-    },
-    fail() {
-      deferred.reject({ msg: '获取位置信息失败' });
-    },
-  });
-  return deferred.promise;
+      return deferred.promise;
+    }),
+    showToast: payload => destructPayload({ icon: 'none' }, payload, (params) => {
+      if (isInvalidString(params.title)) return;
+      $wx.showToast({ ...params });
+    }),
+    showModal: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.showModal({
+        success(res) {
+          deferred.resolve(res.confirm);
+        },
+        fail(err) {
+          deferred.reject(new MinaError(err));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getSetting: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getSetting({
+        success(res) {
+          // const scopes = {};
+          // Object.entries(res.authSetting).map((setting) => {
+          //   Object.assign(scopes, {
+          //     [`${setting[0].slice(6)}`]: setting[1],
+          //   });
+          //   return setting;
+          // });
+          // deferred.resolve(scopes);
+          deferred.resolve(res.authSetting);
+        },
+        fail(err) {
+          deferred.reject(new MinaError(err));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getLocation: payload => destructPayload({ type: 'gcj02' }, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getLocation({
+        success(res) {
+          deferred.resolve(res);
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '获取地理位置信息失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    chooseImage: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.chooseImage({
+        success(res) {
+          deferred.resolve(res.tempFilePaths);
+        },
+        fail(err) {
+          deferred.reject({ ...err, errHint: '取消图片选择' });
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    chooseLocation: payload => destructPayload({ strict: true }, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.chooseLocation({
+        success(res) {
+          if (params.strict && (res.name === '' || res.address === '')) deferred.reject({ errHint: '请选择正确地址' });
+          else deferred.resolve(res);
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '取消地址选择' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    authorize: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.authorize({
+        success() {
+          deferred.resolve();
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '获取授权信息失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getImageInfo: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getImageInfo({
+        success(res) {
+          deferred.resolve(res);
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '获取图片信息失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    saveImageToPhotosAlbum: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.saveImageToPhotosAlbum({
+        success() {
+          deferred.resolve();
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '保存图片失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    showLoading: payload => destructPayload({ mask: true }, payload, (params) => {
+      $wx.showLoading({ ...params });
+    }),
+    showActionSheet: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.showActionSheet({
+        success(res) {
+          deferred.resolve(res.tapIndex);
+        },
+        fail(err) {
+          deferred.resolve(-1);
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getUserInfo: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getUserInfo({
+        success(res) {
+          deferred.resolve(res);
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '获取用户信息失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    requestPayment: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.requestPayment({
+        success() {
+          deferred.resolve();
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '支付失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    saveVideoToPhotosAlbum: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.saveVideoToPhotosAlbum({
+        success() {
+          deferred.resolve();
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '保存视频失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    chooseVideo: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.chooseVideo({
+        success(res) {
+          deferred.resolve(res.tempFilePath);
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '取消视频选择' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getShareInfo: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getShareInfo({
+        success(res) { deferred.resolve(res); },
+        fail(err) { deferred.reject(new MinaError(err)); },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    saveFile: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.saveFile({
+        success(res) { deferred.resolve(res.savedFilePath); },
+        fail(err) { deferred.reject(new MinaError(err)); },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getFileInfo: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getFileInfo({
+        success(res) { deferred.resolve(res); },
+        fail(err) { deferred.reject(new MinaError({ ...err, errHint: '获取文件信息失败' })); },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    request: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.request({
+        success(res) {
+          if (parseInt(res.statusCode, 10) === 200) deferred.resolve(res.data);
+          else deferred.reject(res.data);
+        },
+        fail(err) {
+          deferred.reject(new MinaError(err));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    downloadFile: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.downloadFile({
+        success(res) {
+          if (parseInt(res.statusCode, 10) === 200) deferred.resolve(res);
+          else deferred.reject(new MinaError(res));
+        },
+        fail(err) {
+          deferred.reject(new MinaError(err));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    uploadFile: payload => destructPayload({}, payload, async (params) => {
+      const deferred = Q.defer();
+      $wx.uploadFile({
+        success(res) {
+          const data = JSON.parse(res.data);
+          if (parseInt(res.statusCode, 10) === 200) deferred.resolve(data);
+          else deferred.reject(new MinaError(data));
+        },
+        fail(err) {
+          deferred.reject(new MinaError(err));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    setStorage: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.setStorage({
+        success() {
+          deferred.resolve();
+        },
+        fail(err) {
+          deferred.reject(new MinaError(err));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getStorage: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getStorage({
+        success(res) {
+          deferred.resolve(res.data);
+        },
+        fail() {
+          deferred.resolve();
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    removeStorage: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.removeStorage({
+        success() {
+          deferred.resolve();
+        },
+        fail(err) {
+          deferred.reject(new MinaError(err));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    clearStorage: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.clearStorage({
+        success() {
+          deferred.resolve();
+        },
+        fail(err) {
+          deferred.reject(new MinaError(err));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    compressImage: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.compressImage({
+        success(res) {
+          deferred.resolve(res.tempFilePath);
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '图片压缩失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    checkSession: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.checkSession({
+        success() {
+          deferred.resolve(true);
+        },
+        fail(err) {
+          deferred.reject({ ...err, errHint: '微信登录态过期' });
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    chooseAddress: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.chooseAddress({
+        success(res) {
+          deferred.resolve(res);
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '取消地址选择' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getWeRunData: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getWeRunData({
+        success(res) {
+          deferred.resolve(res);
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '获取微信运动步数失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getBatteryInfo: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getBatteryInfo({
+        success(res) { deferred.resolve(res); },
+        fail(err) { deferred.reject(new MinaError(err)); },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    setClipboardData: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.setClipboardData({
+        success() { deferred.resolve(); },
+        fail(err) { deferred.reject(new MinaError({ ...err, errHint: '复制失败' })); },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    getClipboardData: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.getClipboardData({
+        success(res) { deferred.resolve(res.data); },
+        fail(err) { deferred.reject(new MinaError(err)); },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+    scanCode: payload => destructPayload({}, payload, (params) => {
+      const deferred = Q.defer();
+      $wx.scanCode({
+        success(res) {
+          deferred.resolve(res);
+        },
+        fail(err) {
+          deferred.reject(new MinaError({ ...err, errHint: '扫码失败' }));
+        },
+        ...params,
+      });
+      return deferred.promise;
+    }),
+  };
 };
-
-export const chooseImage = payload => destructPayload({}, payload, (params) => {
-  const deferred = Q.defer();
-  wx.chooseImage({
-    ...params,
-    success(res) {
-      deferred.resolve(res.tempFilePaths);
-    },
-    fail() {
-      deferred.reject();
-    },
-  });
-  return deferred.promise;
-});
-
-export const previewImage = payload => destructPayload({}, payload, (params) => {
-  wx.previewImage({
-    ...params,
-  });
-});
-
-export const chooseLocation = ({ strict = true }) => {
-  const deferred = Q.defer();
-  wx.chooseLocation({
-    success(res) {
-      if (strict && (res.name === '' || res.address === '')) {
-        deferred.reject({ msg: '请选择正确地址' });
-      } else {
-        deferred.resolve(res);
-      }
-    },
-    fail() {
-      deferred.reject();
-    },
-  });
-  return deferred.promise;
-};
-
-export const authorize = payload => destructPayload({}, payload, (params) => {
-  const deferred = Q.defer();
-  wx.authorize({
-    ...params,
-    success() {
-      deferred.resolve();
-    },
-    fail() {
-      deferred.reject({ msg: '获取授权信息失败' });
-    },
-  });
-  return deferred.promise;
-});
-
-export const getImageInfo = payload => destructPayload({}, payload, (params) => {
-  const deferred = Q.defer();
-  wx.getImageInfo({
-    ...params,
-    success(res) {
-      deferred.resolve(res);
-    },
-    fail() {
-      deferred.reject({ msg: '获取图片信息失败' });
-    },
-  });
-  return deferred.promise;
-});
-
-export const saveImageToPhotosAlbum = payload => destructPayload({}, payload, (params) => {
-  const deferred = Q.defer();
-  wx.saveImageToPhotosAlbum({
-    ...params,
-    success(res) {
-      deferred.resolve();
-    },
-    fail() {
-      deferred.reject({ msg: '图片保存失败' });
-    },
-  });
-  return deferred.promise;
-});
-
-export const openLocation = payload => destructPayload({}, payload, (params) => {
-  wx.openLocation({ ...params });
-});
-
-export const makePhoneCall = payload => destructPayload({}, payload, (params) => {
-  wx.makePhoneCall({ ...params });
-});
-
-export const showLoading = payload => destructPayload({}, payload, (params) => {
-  wx.showLoading({ ...params });
-});
-
-export const hideLoading = () => {
-  wx.hideLoading();
-};
-
-export const showActionSheet = payload => destructPayload({}, payload, (params) => {
-  const deferred = Q.defer();
-  wx.showActionSheet({
-    ...params,
-    success(res) {
-      deferred.resolve(res.tapIndex);
-    },
-    fail() {
-      deferred.reject();
-    },
-  });
-  return deferred.promise;
-});
-
-export const setTabBarBadge = payload => destructPayload({}, payload, (params) => {
-  wx.setTabBarBadge({ ...params });
-});
-
-export const removeTabBarBadge = payload => destructPayload({}, payload, (params) => {
-  wx.removeTabBarBadge({ ...params });
-});
-
-export const showTabBarRedDot = payload => destructPayload({}, payload, (params) => {
-  wx.showTabBarRedDot({ ...params });
-});
-
-export const hideTabBarRedDot = payload => destructPayload({}, payload, (params) => {
-  wx.hideTabBarRedDot({ ...params });
-});
-
-export const setNavigationBarTitle = payload => destructPayload({}, payload, (params) => {
-  wx.setNavigationBarTitle({ ...params });
-});
-
-export const showNavigationBarLoading = () => {
-  wx.showNavigationBarLoading();
-};
-
-export const hideNavigationBarLoading = () => {
-  wx.hideNavigationBarLoading();
-};
-
-export const setNavigationBarColor = payload => destructPayload({}, payload, (params) => {
-  wx.setNavigationBarColor({ ...params });
-});
-
-export const getUserInfo = () => {
-  const deferred = Q.defer();
-  wx.getUserInfo({
-    success(res) {
-      deferred.resolve(res);
-    },
-    fail() {
-      deferred.reject({ msg: '获取用户信息失败' });
-    },
-  });
-  return deferred.promise;
-};
-
-export const requestPayment = payload => destructPayload({}, payload, (params) => {
-  const deferred = Q.defer();
-  wx.requestPayment({
-    ...params,
-    success() {
-      deferred.resolve();
-    },
-    fail() {
-      deferred.reject({ msg: '支付失败' });
-    },
-  });
-  return deferred.promise;
-});
