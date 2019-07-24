@@ -19,7 +19,7 @@ export default (() => {
         if (res[0].length === 1) {
           deferred.resolve(res[0][0]);
         } else {
-          deferred.reject(new MinaError({ errHint: '找不到对应画布' }));
+          deferred.reject(new MinaError({ errMsg: 'Canvas not found' }));
         }
       });
     return deferred.promise;
@@ -33,7 +33,7 @@ export default (() => {
         deferred.resolve(res);
       },
       fail(err) {
-        deferred.reject(new MinaError({ ...err, errHint: '所选画布区域为空' }));
+        deferred.reject(new MinaError(err));
       },
     }, instance);
     return deferred.promise;
