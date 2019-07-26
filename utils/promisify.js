@@ -11,12 +11,10 @@ const defaultParams = new Map([
   ['showToast', { icon: 'none' }],
   ['showLoading', { mask: true }],
   ['getLocation', { type: 'gcj02' }],
-  ['showLoading', { mask: true }],
 ]);
 
 const promisify = (prop) => {
-  const isFunc = $wx.canIUse(`${prop}.success`);
-  if (!isFunc) return $wx[prop];
+  if (!$wx.canIUse(`${prop}.success`)) return $wx[prop];
   return payload => destructPayload(
     defaultParams.get(prop), payload,
     params => new Promise((resolve, reject) => {
@@ -33,7 +31,7 @@ const getSystemInfo = payload => destructPayload(
   {}, payload,
   params => new Promise((resolve, reject) => {
     $wx.getSystemInfo({
-      success(res) { resolve({ ...res, scale: res.windowWidth / 375 }); },
+      success(res) { resolve({ ...res, scale: res.windowWidth / 750 }); },
       fail(err) { reject(new MinaError({ ...err, errApi: 'getSystemInfo' })); },
       ...params,
     });
