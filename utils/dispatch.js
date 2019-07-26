@@ -56,6 +56,7 @@ export const debounce = (func, wait, options) => {
 
   const startTimer = (pendingFunc, waiting) => {
     if (useRAF) {
+      cancelAnimationFrame(timerId);
       return requestAnimationFrame(pendingFunc);
     }
     return setTimeout(pendingFunc, waiting);

@@ -1,4 +1,4 @@
-import './utils/init';
+import './utils/promisify';
 
 App({
   globalData: {},
