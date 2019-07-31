@@ -5,6 +5,7 @@ module.exports = {
     "App": true,
     "Page": true,
     "getApp": true,
+    "worker": true,
     "Component": true,
     "getCurrentPages": true,
     "cancelAnimationFrame": true,

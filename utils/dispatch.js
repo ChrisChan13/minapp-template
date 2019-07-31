@@ -15,7 +15,6 @@ export const debounce = (func, wait, options) => {
   let result;
   let leading = false;
 
-  const useRAF = (!wait && wait !== 0 && typeof requestAnimationFrame === 'function');
   if (typeof func !== 'function') {
     throw new TypeError('Expected a function');
   }
@@ -54,13 +53,7 @@ export const debounce = (func, wait, options) => {
     return result;
   };
 
-  const startTimer = (pendingFunc, waiting) => {
-    if (useRAF) {
-      cancelAnimationFrame(timerId);
-      return requestAnimationFrame(pendingFunc);
-    }
-    return setTimeout(pendingFunc, waiting);
-  };
+  const startTimer = (pendingFunc, waiting) => setTimeout(pendingFunc, waiting);
 
   const remainingWait = (time) => {
     const timeSinceLastCall = time - lastCallTime;
@@ -86,10 +79,9 @@ export const debounce = (func, wait, options) => {
     return leading ? invokeFunc(time) : result;
   };
 
-  const debounced = (...args) => {
+  function debounced(...args) {
     const time = Date.now();
     const isInvoking = shouldInvoke(time);
-
     lastArgs = args;
     lastThis = this;
     lastCallTime = time;
@@ -107,14 +99,9 @@ export const debounce = (func, wait, options) => {
       timerId = startTimer(timerExpired, wait);
     }
     return result;
-  };
+  }
 
-  const cancelTimer = (id) => {
-    if (useRAF) {
-      return cancelAnimationFrame(id);
-    }
-    return clearTimeout(id);
-  };
+  const cancelTimer = id => clearTimeout(id);
 
   const cancel = () => {
     if (timerId !== undefined) {

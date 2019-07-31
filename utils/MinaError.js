@@ -22,7 +22,7 @@ const errHints = new Map([
   ['scanCode', '未发现可用二维码'],
 ]);
 
-class MinaError extends Error {
+export default class MinaError extends Error {
   constructor(payload) {
     const message = payload.error || payload.errMsg || undefined;
     super(message);
@@ -32,5 +32,3 @@ class MinaError extends Error {
     this.name = 'MinaError';
   }
 }
-
-export default MinaError;
