@@ -18,5 +18,6 @@ module.exports = {
     "no-param-reassign": 0,
     "no-multi-assign": 0,
     "no-plusplus": 0,
+    "linebreak-style": 0,
   },
 };
