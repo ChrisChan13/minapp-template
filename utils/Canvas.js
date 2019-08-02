@@ -134,6 +134,13 @@ export default class Canvas {
     }, payload, toTempFilePath, this.instance);
   }
 
+  /**
+   * invoke function from canvas context
+   * or set value to canvas property
+   * @param {String} proto canvas function name or canvas property name
+   * @param {Array} payload param(s) for canvas function or value for canvas property
+   * @return {Any}
+   */
   exec(proto, ...payload) {
     if (typeof this.context === 'undefined') throw new MinaError({ errMsg: '请先初始化画布' });
     let result;
