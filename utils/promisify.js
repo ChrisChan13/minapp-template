@@ -1,112 +1,107 @@
 import MinaError from './MinaError';
 
-const $wx = wx;
+(() => {
+  const destructPayload = (defaults = {}, payload = {}, func) => {
+    const params = Object.assign(defaults, payload);
+    return func(params);
+  };
 
-const destructPayload = (defaults = {}, payload = {}, func) => {
-  const params = Object.assign(defaults, payload);
-  return func(params);
-};
+  const defaultParams = new Map([
+    ['showToast', { icon: 'none' }],
+    ['showLoading', { mask: true }],
+    ['getLocation', { type: 'gcj02' }],
+  ]);
 
-const defaultParams = new Map([
-  ['showToast', { icon: 'none' }],
-  ['showLoading', { mask: true }],
-  ['getLocation', { type: 'gcj02' }],
-]);
-
-const promisify = (prop) => {
-  if (!$wx.canIUse(`${prop}.success`)) return $wx[prop];
-  return payload => destructPayload(
-    defaultParams.get(prop), payload,
+  const getSystemInfo = target => payload => destructPayload(
+    {}, payload,
     params => new Promise((resolve, reject) => {
-      $wx[prop]({
-        success(res) { resolve(res); },
-        fail(err) { reject(new MinaError({ ...err, errApi: prop })); },
+      target.getSystemInfo({
+        success(res) { resolve({ ...res, scale: res.windowWidth / 750 }); },
+        fail(err) { reject(new MinaError({ ...err, errApi: 'getSystemInfo' })); },
         ...params,
       });
     }),
   );
-};
 
-const getSystemInfo = payload => destructPayload(
-  {}, payload,
-  params => new Promise((resolve, reject) => {
-    $wx.getSystemInfo({
-      success(res) { resolve({ ...res, scale: res.windowWidth / 750 }); },
-      fail(err) { reject(new MinaError({ ...err, errApi: 'getSystemInfo' })); },
-      ...params,
-    });
-  }),
-);
+  const request = target => payload => destructPayload(
+    {}, payload,
+    params => new Promise((resolve, reject) => {
+      target.request({
+        success(res) {
+          if (parseInt(res.statusCode, 10) === 200) resolve(res.data);
+          else reject(new MinaError({ ...res.data, errApi: 'request' }));
+        },
+        fail(err) {
+          reject(new MinaError({ ...err, errApi: 'request' }));
+        },
+        ...params,
+      });
+    }),
+  );
 
-const request = payload => destructPayload(
-  {}, payload,
-  params => new Promise((resolve, reject) => {
-    $wx.request({
-      success(res) {
-        if (parseInt(res.statusCode, 10) === 200) resolve(res.data);
-        else reject(new MinaError({ ...res.data, errApi: 'request' }));
-      },
-      fail(err) {
-        reject(new MinaError({ ...err, errApi: 'request' }));
-      },
-      ...params,
-    });
-  }),
-);
+  const downloadFile = target => payload => destructPayload(
+    {}, payload,
+    params => new Promise((resolve, reject) => {
+      target.downloadFile({
+        success(res) {
+          if (parseInt(res.statusCode, 10) === 200) resolve(res);
+          else reject(new MinaError({ ...res, errApi: 'downloadFile' }));
+        },
+        fail(err) { reject(new MinaError({ ...err, errApi: 'downloadFile' })); },
+        ...params,
+      });
+    }),
+  );
 
-const downloadFile = payload => destructPayload(
-  {}, payload,
-  params => new Promise((resolve, reject) => {
-    $wx.downloadFile({
-      success(res) {
-        if (parseInt(res.statusCode, 10) === 200) resolve(res);
-        else reject(new MinaError({ ...res, errApi: 'downloadFile' }));
-      },
-      fail(err) { reject(new MinaError({ ...err, errApi: 'downloadFile' })); },
-      ...params,
-    });
-  }),
-);
+  const uploadFile = target => payload => destructPayload(
+    {}, payload,
+    params => new Promise((resolve, reject) => {
+      target.uploadFile({
+        success(res) {
+          const data = JSON.parse(res.data);
+          if (parseInt(res.statusCode, 10) === 200) resolve(data);
+          else reject(new MinaError({ ...data, errApi: 'uploadFile' }));
+        },
+        fail(err) { reject(new MinaError({ ...err, errApi: 'uploadFile' })); },
+        ...params,
+      });
+    }),
+  );
 
-const uploadFile = payload => destructPayload(
-  {}, payload,
-  params => new Promise((resolve, reject) => {
-    $wx.uploadFile({
-      success(res) {
-        const data = JSON.parse(res.data);
-        if (parseInt(res.statusCode, 10) === 200) resolve(data);
-        else reject(new MinaError({ ...data, errApi: 'uploadFile' }));
-      },
-      fail(err) { reject(new MinaError({ ...err, errApi: 'uploadFile' })); },
-      ...params,
-    });
-  }),
-);
+  const getStorage = target => payload => destructPayload(
+    {}, payload,
+    params => new Promise((resolve, reject) => {
+      target.getStorage({
+        success(res) { resolve(res); },
+        fail(err) { resolve(err); },
+        ...params,
+      });
+    }),
+  );
 
-const getStorage = payload => destructPayload(
-  {}, payload,
-  params => new Promise((resolve, reject) => {
-    $wx.getStorage({
-      success(res) { resolve(res); },
-      fail(err) { resolve(err); },
-      ...params,
-    });
-  }),
-);
+  const $ = new Map([
+    ['getSystemInfo', getSystemInfo],
+    ['request', request],
+    ['downloadFile', downloadFile],
+    ['uploadFile', uploadFile],
+    ['getStorage', getStorage],
+  ]);
 
-const $ = new Map([
-  ['getSystemInfo', getSystemInfo],
-  ['request', request],
-  ['downloadFile', downloadFile],
-  ['uploadFile', uploadFile],
-  ['getStorage', getStorage],
-]);
-
-export default (() => {
-  const promisifyWX = {};
-  Object.keys($wx).map((prop) => {
-    Object.assign(promisifyWX, { [prop]: $.get(prop) || promisify(prop) });
-    return prop;
+  global.$ = new Proxy(wx, {
+    get: (target, property) => {
+      if (!wx.canIUse(`${property}.success`)) return target[property];
+      return $.get(property)
+        ? $.get(property)(target)
+        : payload => destructPayload(
+          defaultParams.get(property), payload,
+          params => new Promise((resolve, reject) => {
+            target[property]({
+              success: resolve,
+              fail: reject,
+              ...params,
+            });
+          }),
+        );
+    },
   });
-  wx = Object.assign({}, $wx, promisifyWX);
 })();
