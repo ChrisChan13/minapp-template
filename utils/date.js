@@ -1,7 +1,16 @@
-// prefix number
+/**
+ * prefix number with '0'
+ * @param {Number} n number to be prefixed
+ * @return {String} prefixed number string
+ */
 const formatNumber = n => `${n}`.padStart(2, '0');
 
-// format date: xxxx/xx/xx
+/**
+ * format date to date string with given separator
+ * @param {Date} date date to be formatted
+ * @param {String} [join='/'] spearator
+ * @return {String} formatted date string
+ */
 export const formatDate = (date, join = '/') => {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
@@ -9,7 +18,12 @@ export const formatDate = (date, join = '/') => {
   return [year, month, day].map(formatNumber).join(join);
 };
 
-// format time: xx:xx:xx
+/**
+ * format date to time string with given separator
+ * @param {Date} date date to be formatted
+ * @param {String} [join=':'] spearator
+ * @return {String} formatted time string
+ */
 export const formatTime = (date, join = ':') => {
   const hour = date.getHours();
   const minute = date.getMinutes();
@@ -17,14 +31,30 @@ export const formatTime = (date, join = ':') => {
   return [hour, minute, second].map(formatNumber).join(join);
 };
 
-// format date+time: xxxx/xx/xx xx:xx:xx
-export const formatTimeShow = date => `${formatDate(date)} ${formatTime(date)}`;
+/**
+ * format date to date+time string with given separators
+ * @param {Date} date date to be formatted
+ * @param {[String]} separators separators
+ * @param {String} [separators[0]='/']
+ * @param {String} [separators[1]=':']
+ * @return {String} formatted date_time string
+ */
+export const formatTimeShow = (date, separators) => `${formatDate(date, separators[0])} ${formatTime(date, separators[0])}`;
 
-const weeks = ['日', '一', '二', '三', '四', '五', '六'];
-// format week: 星期x
-export const formatWeek = date => `星期${weeks[date.getDay()]}`;
+const WEEKS = ['日', '一', '二', '三', '四', '五', '六'];
+/**
+ * format date to week string
+ * @param {Date} date date to be formatted
+ * @return {String} formatted week string
+ */
+export const formatWeek = date => `周${WEEKS[date.getDay()]}`;
 
-// pretty time
+/**
+ * format date to pretty string
+ * @param {Date|String|Number} time date to be formatted
+ * @param {Boolean} [detailed=true] whether format as date string or date+time string
+ * @return {String} formatted pretty string
+ */
 export const prettyTime = (time, detailed = true) => {
   const nowTime = new Date();
   const nowYear = nowTime.getFullYear();
@@ -47,16 +77,12 @@ export const prettyTime = (time, detailed = true) => {
   const detail = `${formatNumber(hour)}:${formatNumber(minute)}`;
 
   if (nowStamp === stamp) {
-    // xx:xx
     result = detail;
   } else if (nowStamp - stamp === oneDay) {
-    // 昨天 xx:xx
     result = `昨天${detailed ? ` ${detail}` : ''}`;
   } else if (nowStamp - stamp === 2 * oneDay) {
-    // 星期x xx:xx
     result = `${week}${detailed ? ` ${detail}` : ''}`;
   } else {
-    // xxxx/xx/xx xx:xx
     result = `${year}/${formatNumber(month)}/${formatNumber(day)}${detailed ? ` ${detail}` : ''}`;
   }
 
