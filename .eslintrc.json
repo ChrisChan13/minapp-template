@@ -6,6 +6,7 @@
     "Page": true,
     "getApp": true,
     "worker": true,
+    "arguments": true,
     "Component": true,
     "getCurrentPages": true,
     "cancelAnimationFrame": true,

@@ -1,107 +1,68 @@
 import MinaError from './MinaError';
 
-(() => {
-  const destructPayload = (defaults = {}, payload = {}, func) => {
-    const params = Object.assign(defaults, payload);
-    return func(params);
-  };
+const promisify = (
+  target, property, defaults = {}, args = [],
+) => new Promise((resolve, reject) => {
+  const [params = {}, ...rest] = args;
+  target[property]({
+    ...defaults,
+    ...params,
+    success: resolve,
+    fail: reject,
+  }, ...rest);
+});
 
-  const defaultParams = new Map([
-    ['showToast', { icon: 'none' }],
-    ['showLoading', { mask: true }],
-    ['getLocation', { type: 'gcj02' }],
-  ]);
+const defaultParams = new Map([
+  ['showToast', { icon: 'none' }],
+  ['showLoading', { mask: true }],
+  ['getLocation', { type: 'gcj02' }],
+]);
 
-  const getSystemInfo = target => payload => destructPayload(
-    {}, payload,
-    params => new Promise((resolve, reject) => {
-      target.getSystemInfo({
-        success(res) { resolve({ ...res, scale: res.windowWidth / 750 }); },
-        fail(err) { reject(new MinaError({ ...err, errApi: 'getSystemInfo' })); },
-        ...params,
-      });
-    }),
-  );
+const getSystemInfo = target => (...args) => promisify(target, 'getSystemInfo', {}, args)
+  .then(res => Promise.resolve({ ...res, scale: res.windowWidth / 750 }))
+  .catch(err => Promise.reject(new MinaError({ ...err, errApi: 'getSystemInfo' })));
 
-  const request = target => payload => destructPayload(
-    {}, payload,
-    params => new Promise((resolve, reject) => {
-      target.request({
-        success(res) {
-          if (parseInt(res.statusCode, 10) === 200) resolve(res.data);
-          else reject(new MinaError({ ...res.data, errApi: 'request' }));
-        },
-        fail(err) {
-          reject(new MinaError({ ...err, errApi: 'request' }));
-        },
-        ...params,
-      });
-    }),
-  );
+const request = target => (...args) => promisify(target, 'request', {}, args)
+  .then(res => (parseInt(res.statusCode, 10) === 200
+    ? Promise.resolve(res)
+    : Promise.reject(new MinaError({ ...res.data, errApi: 'request' }))))
+  .catch(err => Promise.reject(new MinaError({ ...err, errApi: 'request' })));
 
-  const downloadFile = target => payload => destructPayload(
-    {}, payload,
-    params => new Promise((resolve, reject) => {
-      target.downloadFile({
-        success(res) {
-          if (parseInt(res.statusCode, 10) === 200) resolve(res);
-          else reject(new MinaError({ ...res, errApi: 'downloadFile' }));
-        },
-        fail(err) { reject(new MinaError({ ...err, errApi: 'downloadFile' })); },
-        ...params,
-      });
-    }),
-  );
+const downloadFile = target => (...args) => promisify(target, 'downloadFile', {}, args)
+  .then(res => (parseInt(res.statusCode, 10) === 200
+    ? Promise.resolve(res)
+    : Promise.reject(new MinaError({ ...res.data, errApi: 'downloadFile' }))))
+  .catch(err => Promise.reject(new MinaError({ ...err, errApi: 'downloadFile' })));
 
-  const uploadFile = target => payload => destructPayload(
-    {}, payload,
-    params => new Promise((resolve, reject) => {
-      target.uploadFile({
-        success(res) {
-          const data = JSON.parse(res.data);
-          if (parseInt(res.statusCode, 10) === 200) resolve(data);
-          else reject(new MinaError({ ...data, errApi: 'uploadFile' }));
-        },
-        fail(err) { reject(new MinaError({ ...err, errApi: 'uploadFile' })); },
-        ...params,
-      });
-    }),
-  );
+const uploadFile = target => (...args) => promisify(target, 'uploadFile', {}, args)
+  // eslint-disable-next-line
+  .then(res => (
+    // eslint-disable-next-line
+    res.data = JSON.parse(res.data),
+    parseInt(res.statusCode, 10) === 200
+      ? Promise.resolve(res)
+      : Promise.reject(new MinaError({ ...res.data, errApi: 'uploadFile' }))))
+  .catch(err => Promise.reject(new MinaError({ ...err, errApi: 'uploadFile' })));
 
-  const getStorage = target => payload => destructPayload(
-    {}, payload,
-    params => new Promise((resolve, reject) => {
-      target.getStorage({
-        success(res) { resolve(res); },
-        fail(err) { resolve(err); },
-        ...params,
-      });
-    }),
-  );
+const getStorage = target => (...args) => promisify(target, 'getStorage', {}, args)
+  .then(res => Promise.resolve(res))
+  .catch(err => Promise.resolve(err));
 
-  const $ = new Map([
-    ['getSystemInfo', getSystemInfo],
-    ['request', request],
-    ['downloadFile', downloadFile],
-    ['uploadFile', uploadFile],
-    ['getStorage', getStorage],
-  ]);
+const $ = new Map([
+  ['getSystemInfo', getSystemInfo],
+  ['request', request],
+  ['downloadFile', downloadFile],
+  ['uploadFile', uploadFile],
+  ['getStorage', getStorage],
+]);
 
-  global.$ = new Proxy(wx, {
-    get: (target, property) => {
-      if (!wx.canIUse(`${property}.success`)) return target[property];
-      return $.get(property)
-        ? $.get(property)(target)
-        : payload => destructPayload(
-          defaultParams.get(property), payload,
-          params => new Promise((resolve, reject) => {
-            target[property]({
-              success: resolve,
-              fail: reject,
-              ...params,
-            });
-          }),
-        );
-    },
-  });
-})();
+global.$ = new Proxy(wx, {
+  get: (target, property) => {
+    if (!wx.canIUse(`${property}.success`)) return target[property];
+    return $.get(property)
+      ? $.get(property)(target)
+      : (...args) => promisify(target, property, defaultParams.get(property), args)
+        .then(res => Promise.resolve(res))
+        .catch(err => Promise.reject(new MinaError({ ...err, errApi: property })));
+  },
+});
