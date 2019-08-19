@@ -2,7 +2,7 @@ const modifyProperty = (payload, property, hook) => {
   if (property in payload) {
     const origin = payload[property];
     if (typeof origin === 'function') {
-      payload[property] = function reasignFunction(params) {
+      payload[property] = function reassignFunction(params) {
         hook.call(this, params, property);
         origin.call(this, params);
       };
