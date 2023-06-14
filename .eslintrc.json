@@ -1,5 +1,16 @@
 {
-  "extends": "airbnb-base",
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": [
+    "airbnb-base"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "sourceType": "module"
+  },
   "globals": {
     "wx": true,
     "App": true,
@@ -13,12 +24,27 @@
     "requestAnimationFrame": true
   },
   "rules": {
-    "no-console": 0,
-    "no-unused-vars": 0,
-    "no-underscore-dangle": 0,
-    "no-param-reassign": 0,
-    "no-multi-assign": 0,
-    "no-plusplus": 0,
-    "linebreak-style": 0
+    "linebreak-style": "off",
+    "no-unused-vars": [
+      "error",
+      {
+        "args": "none"
+      }
+    ],
+    "max-len": [
+      "error",
+      {
+        "code": 110,
+        "ignoreComments": true
+      }
+    ],
+    "no-console": "off",
+    "no-plusplus": [
+      "error",
+      {
+        "allowForLoopAfterthoughts": true
+      }
+    ],
+    "no-fallthrough": "off"
   }
 }

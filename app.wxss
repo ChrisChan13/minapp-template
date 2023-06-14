@@ -1,0 +1,2 @@
+@import './assets/styles/variables.wxss';
+@import './assets/styles/reset.wxss';

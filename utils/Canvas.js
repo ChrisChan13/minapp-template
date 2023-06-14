@@ -1,166 +1,196 @@
-import MinaError from './MinaError';
-
-const destructPayload = (defaults = {}, payload = {}, func, instance) => {
-  delete payload.canvasId;
-  delete payload.success;
-  delete payload.fail;
-  const params = Object.assign(defaults, payload);
-  return func(params, instance);
+/* eslint-disable no-unused-expressions */
+/* eslint-disable no-param-reassign */
+/**
+ * 根据预设以及传参生成参数内容
+ * @param {Object} defaults 默认参数
+ * @param {Object} payload 传入参数
+ * @param {PageInstance} target 页面实例
+ * @returns 最终参数
+ */
+const destructPayload = (defaults = {}, payload = {}, target = null) => {
+  // 防止覆盖
+  payload.canvasId && delete payload.canvasId;
+  payload.success && delete payload.success;
+  payload.fail && delete payload.fail;
+  const params = [Object.assign(defaults, payload)];
+  target && params.push(target);
+  return params;
 };
 
-const getInfo = (canvasId, instance) => new Promise((resolve, reject) => {
-  const query = wx.createSelectorQuery();
-  query.in(instance);
-  query.selectAll(`#${canvasId}`).boundingClientRect()
-    .exec((res) => {
-      if (res[0].length === 1) {
-        resolve(res[0][0]);
-      } else {
-        reject(new MinaError({ errMsg: 'Canvas not found' }));
-      }
-    });
-});
-
-const getImageData = (params, instance) => new Promise((resolve, reject) => {
-  wx.canvasGetImageData({
-    ...params,
-    success(res) {
-      resolve(res);
-    },
-    fail(err) {
-      reject(new MinaError({ ...err, errHint: '图像数据错误' }));
-    },
-  }, instance);
-});
-
-const getThemeColor = (params, instance) => getImageData(params, instance).then((res) => {
-  const { data } = res;
-  const block = 5;
-  const rgb = { r: 0, g: 0, b: 0 };
-  let count = 0;
-  const { length } = data;
-  let i = block * 4 - 4;
-  while (i < length) {
-    ++count;
-    rgb.r += data[i];
-    rgb.g += data[i + 1];
-    rgb.b += data[i + 2];
-    i += block * 4;
-  }
-  // eslint-disable-next-line
-  rgb.r = ~~(rgb.r / count);
-  // eslint-disable-next-line
-  rgb.g = ~~(rgb.g / count);
-  // eslint-disable-next-line
-  rgb.b = ~~(rgb.b / count);
-  return rgb;
-});
-
-const putImageData = (params, instance) => new Promise((resolve, reject) => {
-  wx.canvasPutImageData({
-    ...params,
-    success(res) {
-      resolve();
-    },
-    fail(err) {
-      reject(new MinaError({ ...err, errHint: '图像数据错误' }));
-    },
-  }, instance);
-});
-
-const toTempFilePath = (params, instance) => new Promise((resolve, reject) => {
+// 画布生成图片
+const toTempFilePath = (...params) => {
+  const deferred = wx.$defer();
+  const [payload = {}, ...rest] = params;
   wx.canvasToTempFilePath({
-    ...params,
+    ...payload,
     success(res) {
-      resolve(res.tempFilePath);
+      deferred.resolve(res.tempFilePath);
     },
     fail(err) {
-      reject(new MinaError({ ...err, errHint: '生成图片失败' }));
+      deferred.reject(err);
     },
-  }, instance);
-});
+  }, ...rest);
+  return deferred.promise;
+};
 
+// 获取画布像素数据
+const getImageData = (...params) => {
+  const deferred = wx.$defer();
+  const [payload = {}, ...rest] = params;
+  wx.canvasGetImageData({
+    ...payload,
+    success(res) {
+      deferred.resolve(res.data);
+    },
+    fail(err) {
+      deferred.reject(err);
+    },
+  }, ...rest);
+  return deferred.promise;
+};
+
+// 绘制画布像素数据
+const putImageData = (...params) => {
+  const deferred = wx.$defer();
+  const [payload = {}, ...rest] = params;
+  wx.canvasPutImageData({
+    ...payload,
+    success(res) {
+      deferred.resolve(res);
+    },
+    fail(err) {
+      deferred.reject(err);
+    },
+  }, ...rest);
+  return deferred.promise;
+};
+
+// 获取 canvas 对象
+const getCanvas = (id, target) => {
+  const deferred = wx.$defer();
+  const query = wx.createSelectorQuery();
+  target && query.in(target);
+  query.select(`#${id}`).fields({
+    size: true, context: true,
+  }, (res) => {
+    if (res.context) deferred.resolve(res);
+    else deferred.reject(new Error(`Canvas#${id} is not found!`));
+  }).exec();
+  return deferred.promise;
+};
+
+/**
+ * 画布类
+ *
+ * 请保持 canvas-id 与 element-id 一致，方便获取上下文信息
+ *
+ * 支持原型上直接调用：
+ * ```
+ * Canvas.fillStyle = 'red';
+ * Canvas.fillRect(10, 10, 150, 75);
+ * await Canvas.draw();
+ * ```
+ * 也支持链式调用：
+ * ```
+ * await Canvas.exec('fillStyle', 'red')
+ *   .exec('fillRect', 10, 10, 150, 75)
+ *   .draw();
+ * ```
+ */
 export default class Canvas {
-  constructor(canvasId, instance) {
-    this.id = canvasId;
-    this.instance = instance;
+  constructor(id, target) {
+    this.id = id; // canvasId 与 elementId 相同
+    this.target = target; // 页面实例
+    this.width = 0; // 画布大小
+    this.height = 0; // 画布大小
+    this.context = null; // 画布上下文
   }
 
-  init() {
-    return getInfo(this.id, this.instance).then((info) => {
-      Object.assign(this, {
-        ...info,
-        context: wx.createCanvasContext(this.id, this.instance),
+  /** 初始化画布 */
+  async init() {
+    const canvas = await getCanvas(this.id, this.target);
+    this.width = canvas.width;
+    this.height = canvas.height;
+    this.context = canvas.context;
+    // 将 canvas.context 中的 属性/函数 挂载到 this 上，方便 获取/运行
+    Object.getOwnPropertyNames(Object.getPrototypeOf(canvas.context)).map((key) => {
+      if (key in this) return key;
+      Object.defineProperty(this, key, {
+        get: () => this.state[key],
       });
-      return this;
+      return key;
     });
-  }
-
-  getImageData(payload) {
-    return destructPayload({
-      x: 0,
-      y: 0,
-      width: this.width,
-      height: this.height,
-      canvasId: this.id,
-    }, payload, getImageData, this.instance);
-  }
-
-  putImageData(payload) {
-    return destructPayload({
-      x: 0,
-      y: 0,
-      width: this.width,
-      height: this.height,
-      canvasId: this.id,
-    }, payload, putImageData, this.instance);
-  }
-
-  getThemeColor(payload) {
-    return destructPayload({
-      x: 0,
-      y: 0,
-      width: this.width,
-      height: this.height,
-      canvasId: this.id,
-    }, payload, getThemeColor, this.instance);
   }
 
   toTempFilePath(payload) {
-    return destructPayload({
+    if (!this.context) throw new Error('Please invoke Canvas.init first!');
+    return toTempFilePath(...destructPayload({
       fileType: 'jpg',
       quality: 1,
       canvasId: this.id,
-    }, payload, toTempFilePath, this.instance);
+    }, payload, this.target));
+  }
+
+  getImageData(payload) {
+    if (!this.context) throw new Error('Please invoke Canvas.init first!');
+    return getImageData(...destructPayload({
+      canvasId: this.id,
+      x: 0,
+      y: 0,
+      width: this.width,
+      height: this.height,
+    }, payload, this.target));
+  }
+
+  putImageData(payload) {
+    if (!this.context) throw new Error('Please invoke Canvas.init first!');
+    return putImageData(...destructPayload({
+      canvasId: this.id,
+      x: 0,
+      y: 0,
+      width: this.width,
+      height: this.height,
+    }, payload, this.target));
   }
 
   /**
-   * invoke function from canvas context
-   * or set value to canvas property
-   * @param {String} proto canvas function name or canvas property name
-   * @param {Array} payload param(s) for canvas function or value for canvas property
-   * @return {Any}
+   * 执行对应 Canvas.context 的链式操作
+   * @param {String} proto Canvas.context 的 属性/函数 名
+   * @param  {...*} payload Canvas.context 的 属性值/函数参数
+   * @returns {Canvas|*} 返回原型或函数返回值
+   * ---
+   * **示例代码**
+   * ```
+   * canvas.exec('moveTo', 10, 10)
+   *   .exec('lineTo', 100, 10)
+   *   .exec('lineTo', 100, 100)
+   *   .exec('closePath')
+   *   .exec('stroke');
+   * await canvas.draw();
+   * ```
+   * 或：
+   * ```
+   * canvas.exec('font', 'italic bold 20px sans-serif');
+   * const metrics = canvas.exec('measureText', 'Hello World');
+   * ```
    */
   exec(proto, ...payload) {
-    if (typeof this.context === 'undefined') throw new MinaError({ errMsg: '请先初始化画布' });
-    let result;
-    if (proto === 'draw') {
-      result = new Promise((resolve, reject) => {
-        this.context.draw(
-          typeof payload[0] === 'boolean' ? payload[0] : true,
-          (() => {
-            if (typeof payload[1] === 'function') payload[1]();
-            resolve(this);
-          })(),
-        );
-      });
-    } else if (typeof this.context[proto] === 'function') {
-      this.context[proto](...payload);
-      result = this;
+    if (!this.context) throw new Error('Please invoke Canvas.init first!');
+    if (typeof this.context[proto] === 'function') {
+      const result = this.context[proto](...payload);
+      if (typeof result !== 'undefined') return result;
     } else {
       [this.context[proto]] = payload;
-      result = this;
     }
-    return result;
+    return this;
+  }
+
+  draw(reserve = true) {
+    if (!this.context) throw new Error('Please invoke Canvas.init first!');
+    const deferred = wx.$defer();
+    this.context.draw(reserve, () => {
+      deferred.resolve();
+    });
+    return deferred.promise;
   }
 }

@@ -1,0 +1,15 @@
+button {
+  margin: unset;
+  padding: unset;
+  line-height: unset;
+  border-radius: unset;
+  background: unset;
+  background-color: unset;
+  font-size: unset;
+  text-align: unset;
+}
+button::after {
+  content: none;
+  border: unset;
+  border-radius: unset;
+}

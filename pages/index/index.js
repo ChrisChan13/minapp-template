@@ -1,4 +1,4 @@
 Page({
   data: {},
-  onLoad(options) {},
+  onLoad(query) {},
 });
